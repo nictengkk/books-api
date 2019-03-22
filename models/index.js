@@ -1,7 +1,8 @@
 const Sequelize = require("sequelize");
 //create the preconfigured sequelize instance
 const sequelize = new Sequelize("booksapi", "postgres", "", {
-  dialect: "postgres"
+  dialect: "postgres",
+  logging: false
 });
 
 //pass the models to the connection

@@ -1,7 +1,18 @@
 const request = require("supertest");
 const app = require("../../app");
+const { sequelize } = require("../../models");
+const createAuthorsAndBooks = require("../../seed");
 
 const { books } = require("../../data/db.json");
+
+beforeAll(async () => {
+  await sequelize.sync({ force: true });
+  await createAuthorsAndBooks();
+});
+
+afterAll(async () => {
+  await sequelize.close();
+});
 
 const route = (params = "") => {
   const path = "/api/v1/books";
@@ -9,29 +20,55 @@ const route = (params = "") => {
 };
 
 describe("Books", () => {
+  const verifyBooks = (res, expected) => {
+    const books = res.body;
+    console.log(books);
+    books.forEach((book, index) => {
+      expect(book.title).toEqual(expected[index].title);
+      expect(book.author.name).toEqual(expected[index].author.name);
+    });
+  };
+
   describe("[GET] Search for books", () => {
     test("returns all books", () => {
+      const expectedBooks = [
+        { id: 1, title: "Animal Farm", author: { name: "George Orwell" } },
+        { id: 2, title: "1984", author: { name: "George Orwell" } },
+        {
+          id: 3,
+          title: "Homage to Catalonia",
+          author: { name: "George Orwell" }
+        },
+        {
+          id: 4,
+          title: "The Road to Wigan Pier",
+          author: { name: "George Orwell" }
+        },
+        {
+          id: 5,
+          title: "Brave New World",
+          author: { name: "Aldous Huxley" }
+        },
+        { id: 6, title: "Fahrenheit 451", author: { name: "Ray Bradbury" } }
+      ];
+
       return request(app)
         .get(route())
         .expect("content-type", /json/)
         .expect(200)
-        .expect([
-          { id: "1", title: "Animal Farm", author: "George Orwell" },
-          { id: "2", title: "1984", author: "George Orwell" },
-          { id: "3", title: "Homage to Catalonia", author: "George Orwell" },
-          { id: "4", title: "The Road to Wigan Pier", author: "George Orwell" },
-          { id: "5", title: "Brave New World", author: "Aldous Huxley" },
-          { id: "6", title: "Fahrenheit 451", author: "Ray Bradbury" }
-        ]);
+        .then(res => verifyBooks(res, expectedBooks));
     });
 
     test("returns books matching the title query", () => {
+      const expectedBooks = [
+        { id: 2, title: "1984", author: { name: "George Orwell" } }
+      ];
       return request(app)
         .get(route())
         .query({ title: "1984" })
         .expect("content-type", /json/)
         .expect(200)
-        .expect([{ id: "2", title: "1984", author: "George Orwell" }]);
+        .then(res => verifyBooks(res, expectedBooks));
     });
 
     test("returns books matching the author query", () => {
