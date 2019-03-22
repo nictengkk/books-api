@@ -5,10 +5,6 @@ const router = express.Router();
 const { Book, Author } = require("../models");
 const { books: oldBooks } = require("../data/db.json");
 
-const filterBooksBy = (property, value) => {
-  return oldBooks.filter(b => b[property] === value);
-};
-
 const verifyToken = (req, res, next) => {
   const { authorization } = req.headers;
   if (!authorization) {
@@ -29,14 +25,17 @@ router
 
     if (title) {
       const books = await Book.findAll({
-        where: { title: title },
-        include: [Author]
+        where: { title: title }, //match based on title
+        include: [Author] //different from line 34 because Author and title belongs to different tables
       });
       res.json(books);
     } else if (author) {
-      res.json(filterBooksBy("author", author));
+      const books = await Book.findAll({
+        include: [{ model: Author, where: { name: author } }] //to include Author name, and match based on name (where)
+      });
+      res.json(books);
     } else {
-      const books = await Book.findAll({ include: [Author] });
+      const books = await Book.findAll({ include: [Author] }); //to include Author name
       res.json(books);
     }
   })
