@@ -1,4 +1,3 @@
-const uuid = require("uuid/v4");
 const Sequelize = require("sequelize");
 const express = require("express");
 const router = express.Router();
@@ -39,10 +38,20 @@ router
       res.json(books);
     }
   })
-  .post(verifyToken, (req, res) => {
-    const book = req.body;
-    book.id = uuid();
-    res.status(201).json(req.body);
+  .post(verifyToken, async (req, res) => {
+    const { title, author } = req.body;
+    const [foundAuthor] = await Author.findOrCreate({
+      where: {
+        name: author
+      }
+    });
+    const newBook = await Book.create({ title: title });
+    await newBook.setAuthor(foundAuthor);
+    const newBookWithAuthor = await Book.findOne({
+      where: { id: newBook.id },
+      include: [Author]
+    });
+    res.status(201).json(newBookWithAuthor);
   });
 
 router
