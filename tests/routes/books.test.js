@@ -139,10 +139,29 @@ describe("Books", () => {
           author: "Aldous Huxley"
         })
         .expect(202)
-        .expect({
+        .then(res => {
+          const book = res.body;
+          expect(book.id).toEqual(5);
+          expect(book.title).toEqual("The Perennial Philosophy");
+          expect(book.author.name).toEqual("Aldous Huxley");
+        });
+    });
+
+    test("successfully edits a book's author", () => {
+      const id = "5";
+      return request(app)
+        .put(route(id))
+        .send({
           id: 5,
           title: "The Perennial Philosophy",
-          author: "Aldous Huxley"
+          author: "A Huxley"
+        })
+        .expect(202)
+        .then(res => {
+          const book = res.body;
+          expect(book.id).toEqual(5);
+          expect(book.title).toEqual("The Perennial Philosophy");
+          expect(book.author.name).toEqual("A Huxley");
         });
     });
 
