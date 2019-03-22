@@ -28,7 +28,7 @@ router
           where: { title: title }, //match based on title
           include: [Author] //different from line 34 because Author and title belongs to different tables
         });
-        res.json(books);
+        res.json(books); //why dont need return??
       } else if (author) {
         const books = await Book.findAll({
           include: [{ model: Author, where: { name: author } }] //to include Author name, and match based on name (where)
@@ -61,6 +61,7 @@ router
       );
       return res.status(201).json(createdBook);
 
+      //Alternative using findOrCreate
       // const { title, author } = req.body;
       // const [foundAuthor] = await Author.findOrCreate({
       //   where: {
@@ -104,12 +105,18 @@ router
       return res.status(400).end();
     }
   })
-  .delete((req, res) => {
-    const book = oldBooks.find(b => b.id === req.params.id);
-    if (book) {
-      res.sendStatus(202);
-    } else {
-      res.sendStatus(400);
+  .delete(async (req, res) => {
+    try {
+      const book = await Book.destroy({
+        where: { id: req.params.id }
+      });
+      if (book) {
+        return res.sendStatus(202);
+      }
+      return res.sendStatus(400);
+    } catch (error) {
+      console.error(error.message);
+      return res.sendStatus(400);
     }
   });
 
