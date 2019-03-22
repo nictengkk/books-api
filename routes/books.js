@@ -40,18 +40,34 @@ router
   })
   .post(verifyToken, async (req, res) => {
     const { title, author } = req.body;
-    const [foundAuthor] = await Author.findOrCreate({
-      where: {
-        name: author
-      }
-    });
-    const newBook = await Book.create({ title: title });
-    await newBook.setAuthor(foundAuthor);
-    const newBookWithAuthor = await Book.findOne({
-      where: { id: newBook.id },
-      include: [Author]
-    });
-    res.status(201).json(newBookWithAuthor);
+    const foundAuthor = await Author.findOne({ where: { name: author } });
+
+    if (!foundAuthor) {
+      const createdBook = await Book.create(
+        { title, author: { name: author } },
+        { include: [Author] }
+      );
+      return res.status(201).json(createdBook);
+    }
+    const createdBook = await Book.create(
+      { title, authorId: foundAuthor.id },
+      { include: [Author] }
+    );
+    return res.status(201).json(createdBook);
+
+    // const { title, author } = req.body;
+    // const [foundAuthor] = await Author.findOrCreate({
+    //   where: {
+    //     name: author
+    //   }
+    // });
+    // const newBook = await Book.create({ title: title });
+    // await newBook.setAuthor(foundAuthor);
+    // const newBookWithAuthor = await Book.findOne({
+    //   where: { id: newBook.id },
+    //   include: [Author]
+    // });
+    // res.status(201).json(newBookWithAuthor);
   });
 
 router

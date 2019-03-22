@@ -122,7 +122,6 @@ describe("Books", () => {
         .expect(201)
         .then(res => {
           const book = res.body;
-          console.log(book);
           expect(book.title).toEqual("The Handmaid's Tale");
           expect(book.author.name).toEqual("Margaret Atwood");
         });
