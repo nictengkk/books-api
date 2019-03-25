@@ -1,8 +1,8 @@
 const Sequelize = require("sequelize");
 const express = require("express");
 const router = express.Router();
-const { Book, Author } = require("../models");
-const { books: oldBooks } = require("../data/db.json");
+const { Book, Author, sequelize } = require("../models");
+// const { books: oldBooks } = require("../data/db.json");
 
 const verifyToken = (req, res, next) => {
   const { authorization } = req.headers;
@@ -45,36 +45,40 @@ router
   })
   .post(verifyToken, async (req, res) => {
     try {
-      const { title, author } = req.body;
-      const foundAuthor = await Author.findOne({ where: { name: author } });
+      // const { title, author } = req.body;
+      // const foundAuthor = await Author.findOne({ where: { name: author } });
 
-      if (!foundAuthor) {
-        const createdBook = await Book.create(
-          { title, author: { name: author } },
-          { include: [Author] }
-        );
-        return res.status(201).json(createdBook);
-      }
-      const createdBook = await Book.create(
-        { title, authorId: foundAuthor.id },
-        { include: [Author] }
-      );
-      return res.status(201).json(createdBook);
+      // if (!foundAuthor) {
+      //   const createdBook = await Book.create(
+      //     { title, author: { name: author } },
+      //     { include: [Author] }
+      //   );
+      //   return res.status(201).json(createdBook);
+      // }
+      // const createdBook = await Book.create(
+      //   { title, authorId: foundAuthor.id },
+      //   { include: [Author] }
+      // );
+      // return res.status(201).json(createdBook);
 
       //Alternative using findOrCreate
-      // const { title, author } = req.body;
-      // const [foundAuthor] = await Author.findOrCreate({
-      //   where: {
-      //     name: author
-      //   }
-      // });
-      // const newBook = await Book.create({ title: title });
-      // await newBook.setAuthor(foundAuthor);
-      // const newBookWithAuthor = await Book.findOne({
-      //   where: { id: newBook.id },
-      //   include: [Author]
-      // });
-      // res.status(201).json(newBookWithAuthor);
+      const { title, author } = req.body;
+      await sequelize.transaction(async t => {
+        const [foundAuthor] = await Author.findOrCreate({
+          where: {
+            name: author
+          },
+          transaction: t
+        });
+        const newBook = await Book.create({ title: title }, { transaction: t });
+        await newBook.setAuthor(foundAuthor, { transaction: t });
+        const newBookWithAuthor = await Book.findOne({
+          where: { id: newBook.id },
+          include: [Author],
+          transaction: t
+        });
+        res.status(201).json(newBookWithAuthor);
+      });
     } catch (error) {
       console.error(error.message);
       return res.status(400);

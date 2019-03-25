@@ -2,7 +2,7 @@ module.exports = {
   development: {
     username: "postgres",
     password: "",
-    database: "books-api",
+    database: "booksapi",
     options: {
       dialect: "postgres"
     }
@@ -10,7 +10,7 @@ module.exports = {
   test: {
     username: "postgres",
     password: "",
-    database: "books-api",
+    database: "booksapi",
     options: {
       dialect: "sqlite",
       storage: ":memory:",
